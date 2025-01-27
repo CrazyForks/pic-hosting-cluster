@@ -450,8 +450,7 @@ export default {
     // 获取完整的请求路径
     const requestPath = decodeURIComponent(url.pathname);
     const FILE = requestPath.split('/').pop();
-    const subPath = requestPath.substring(1, requestPath.lastIndexOf('/'));
-    const fullPath = DIR ? `${DIR}/${subPath}` : subPath;
+    const fullPath = DIR ? `${DIR}` : '';
 
     // 直接使用 GITLAB_CONFIGS 中的 name 作为 GitHub 仓库名
     const githubRepos = GITLAB_CONFIGS.map(config => config.name);
@@ -573,7 +572,7 @@ export default {
 
       if (validConfigs.r2) {
         const r2Requests = await Promise.all(R2_CONFIGS.map(async (r2Config) => {
-          const r2Path = `${r2Config.bucket}/${fullPath}/${FILE}`;
+          const r2Path = `${r2Config.bucket}/${fullPath}/${FILE}`.replace(/\/+/g, '/');
           const signedRequest = await getSignedUrl(r2Config, 'GET', r2Path);
           return {
             url: signedRequest.url,
@@ -587,7 +586,7 @@ export default {
 
       if (validConfigs.b2) {
         const b2Requests = await Promise.all(B2_CONFIGS.map(async (b2Config) => {
-          const b2Path = `${b2Config.bucket}/${fullPath}/${FILE}`;
+          const b2Path = `${b2Config.bucket}/${fullPath}/${FILE}`.replace(/\/+/g, '/');
           const signedRequest = await getSignedUrl(b2Config, 'GET', b2Path);
           return {
             url: signedRequest.url,
@@ -628,7 +627,7 @@ export default {
 
       if (validConfigs.gitlab) {
         const gitlabRequests = GITLAB_CONFIGS.map(config => ({
-          url: `https://gitlab.com/api/v4/projects/${config.id}/repository/files/${encodeURIComponent(`${fullPath}/${FILE}`)}?ref=main`,
+          url: `https://gitlab.com/api/v4/projects/${config.id}/repository/files/${encodeURIComponent(`${fullPath}/${FILE}`.replace(/\/+/g, '/'))}/raw?ref=main`,
           headers: {
             'PRIVATE-TOKEN': config.token
           },
@@ -675,7 +674,7 @@ export default {
         }));
       } else if (from === 'gitlab' && validConfigs.gitlab) {
         requests = GITLAB_CONFIGS.map(config => ({
-          url: `https://gitlab.com/api/v4/projects/${config.id}/repository/files/${encodeURIComponent(`${fullPath}/${FILE}`)}/raw?ref=main`,
+          url: `https://gitlab.com/api/v4/projects/${config.id}/repository/files/${encodeURIComponent(`${fullPath}/${FILE}`.replace(/\/+/g, '/'))}/raw?ref=main`,
           headers: {
             'PRIVATE-TOKEN': config.token
           },
